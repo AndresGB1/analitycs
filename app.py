@@ -2,6 +2,9 @@ import requests
 from datetime import date
 import pandas as pd
 from decouple import config
+import csv
+import re
+from unicodedata import normalize
 
 #Getting the urls from the config file
 url_museos = config('URL_MUSEOS')
@@ -18,11 +21,29 @@ name_museos = create_name('museos')
 name_cines = create_name('cines')
 name_bibliotecas = create_name('bibliotecas')
 
+#Function to normalize the string headers
+def normalize_string(s):
+    s = re.sub(r"([^n\u0300-\u036f]|n(?!\u0303(?![\u0300-\u036f])))[\u0300-\u036f]+", r"\1", normalize('NFD', s), 0, re.I)
+    return normalize('NFC', s).lower()
+
+
+#Function to change the headers of the csv files
+def change_header_csv(name):
+    with open(name, 'r') as f:
+        reader = csv.reader(f)
+        header = next(reader)
+        header = list(map(normalize_string, header))
+        with open(name, 'w') as f:
+            writer = csv.writer(f)
+            writer.writerow(header)
+            writer.writerows(reader)
+
 #Function to get the csv files
 def get_csv(url, name):
     r = requests.get(url)
     with open(name, 'wb') as f:
         f.write(r.content)
+    change_header_csv(name)
 
 #Downloading the csv files
 def download_data():
