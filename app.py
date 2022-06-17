@@ -1,3 +1,4 @@
+from operator import ne
 import requests
 from datetime import date
 import pandas as pd
@@ -50,3 +51,24 @@ def download_data():
     get_csv(url_museos, name_museos)
     get_csv(url_cines, name_cines)
     get_csv(url_bibliotecas, name_bibliotecas)
+
+
+def changeHeader(df):
+    df.rename({'cod_loc': 'cod_localidad', 'idprovincia': 'id_provincia', 'iddepartamento': 'id_departamento', 'cp': 'cod_postal', 'telefono': 'numero_telefono'}, axis=1, inplace=True)
+    return df
+
+def create_table(museos, cines, bibliotecas):
+    df_museos = pd.read_csv(museos)
+    df_cines = pd.read_csv(cines)
+    df_bibliotecas = pd.read_csv(bibliotecas)
+    headersBiliotecas = ['cod_loc', 'idprovincia', 'iddepartamento', 'categoria', 'provincia', 'localidad', 'nombre', 'cp', 'telefono', 'mail', 'web','domicilio']
+    headers = ['cod_loc', 'idprovincia', 'iddepartamento', 'categoria', 'provincia', 'localidad', 'nombre','cp', 'telefono', 'mail', 'web']
+    
+    df_museos = df_museos[headers]
+    df_cines = df_cines[headers]
+    df_bibliotecas = df_bibliotecas[headersBiliotecas]
+
+    #Merge the dataframes
+    df_normalize = pd.concat([df_museos, df_cines, df_bibliotecas])
+    return changeHeader(df_normalize)
+
