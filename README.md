@@ -5,7 +5,7 @@
 - Generar entorno virtual en Linux e instalación de dependencias: 
      
       virtualenv venv
-      source venv/bin/activate.fish 
+      source venv/bin/activate 
       pip install requests
       pip install pandas 
       pip install python-decouple 
@@ -16,7 +16,7 @@
 - Generar entorno virtual en Windows:
 
       python3 -m virtualenv venv
-      venc\Scripts\activate
+      venv\Scripts\activate
       pip install requests
       pip install pandas 
       pip install python-decouple 
