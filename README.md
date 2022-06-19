@@ -6,14 +6,23 @@
      
       virtualenv venv
       source venv/bin/activate.fish 
-      pip install python-decouple 
       pip install requests
       pip install pandas 
+      pip install python-decouple 
+      pip install SQLAlchemy
+      python app.py
+      
       
 - Generar entorno virtual en Windows:
-      python3 -m venv /path/to/new/virtual/environment
-      pip install python-decouple 
+
+      python3 -m virtualenv venv
+      venc\Scripts\activate
       pip install requests
-      pip install pandas
+      pip install pandas 
+      pip install python-decouple 
+      pip install SQLAlchemy
+      python app.py
+      
 ### Configurar la conexión a la base de datos.
-En proceso
+Base de datos alohada en la nube, (postgresql)
+Archivo .env con la url de la configuración
