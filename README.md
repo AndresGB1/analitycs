@@ -24,5 +24,9 @@
       python app.py
       
 ### Configurar la conexión a la base de datos.
-Base de datos alohada en la nube, (postgresql)
-Archivo .env con la url de la configuración
+- Base de datos alojada en la nube, (postgresql)
+
+- Archivo .env con la url de la configuración
+
+- Las tablas de la BD se generan en python
+
