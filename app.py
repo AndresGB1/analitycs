@@ -1,4 +1,3 @@
-from operator import ne
 import requests
 from datetime import date
 import pandas as pd
