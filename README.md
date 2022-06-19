@@ -11,7 +11,7 @@
       pip install pandas 
       
 - Generar entorno virtual en Windows:
-
+      python3 -m venv /path/to/new/virtual/environment
       pip install python-decouple 
       pip install requests
       pip install pandas
