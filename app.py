@@ -136,6 +136,7 @@ def normalize_table(df_museos,df_cines,df_bibliotecas):
     #Merge the dataframes
     df_normalize = pd.concat([new_df_museos, new_df_cines, new_df_bibliotecas])
     logging.info(' Se normalizaron los datos, primer dataframe: ' + str(len(df_normalize)))
+    logging.info(' Previsualización del dataframe:\n ' + str(df_normalize))
     return changeHeader(df_normalize)
 
 #Creating the DataFrame 2
@@ -180,6 +181,7 @@ def register_count_table(df_museos,df_cines,df_bibliotecas):
     except:
         logging.error('Error al normalizar los datos')
         return None
+    logging.info(' Previsualización del dataframe:\n ' + str(df_normalize))
     return df_normalize
 
 #Creating the DataFrame 3
@@ -197,6 +199,7 @@ def info_cine(df_cines):
         logging.error('Error al obtener los headers de los dataframes')
         return None
     logging.info(' Se normalizaron los datos, tercer dataframe: ' + str(len(df_cines2)))
+    logging.info(' Previsualización del dataframe:\n ' + str(df_cines2))
     return df_cines2
 
 # Creation of tables in the Database
