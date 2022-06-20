@@ -9,6 +9,9 @@ import sqlalchemy
 from sqlalchemy import exc
 import logging
 
+logging.basicConfig(level=logging.INFO, filename='app.log', filemode='w', 
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
 #Getting the urls from the config file
 url_museos = config('URL_MUSEOS')
 url_cines = config('URL_CINES')
@@ -40,11 +43,6 @@ def create_name(categoria):
     name = categoria + '\\' + date.today().strftime('%Y-%m') + '\\' + categoria + '-' + date.today().strftime('%d-%m-%Y') + '.csv'
     return name
 
-#Creating the names of the csv files 
-name_museos = create_name('museos')
-name_cines = create_name('cines')
-name_bibliotecas = create_name('bibliotecas')
-
 def normalize_string(s):
     '''
     Normalize the string headers
@@ -74,6 +72,7 @@ def change_header_csv(name):
         with open(name, 'w', newline='') as f:
             writer = csv.writer(f)
             writer.writerows(rows) 
+            logging.info(' Se cambiaron los headers del archivo ' + name)
     except:
         logging.error('Archivo no encontrado')
 
@@ -88,6 +87,7 @@ def get_csv(url, name):
         r = requests.get(url)
         with open(name, 'wb') as f:
             f.write(r.content)
+            logging.info(' Se descargó el archivo ' + name)
         change_header_csv(name)
     except:
         logging.error('Error al descargar el archivo ' + name+'\nUrl:'+url)
@@ -99,13 +99,6 @@ def download_data():
     get_csv(url_museos, name_museos)
     get_csv(url_cines, name_cines)
     get_csv(url_bibliotecas, name_bibliotecas)
-
-download_data()
-
-#Read CSV To dataframe
-df_museos = pd.read_csv(name_museos)
-df_cines = pd.read_csv(name_cines)
-df_bibliotecas = pd.read_csv(name_bibliotecas)
 
 def changeHeader(df):
     '''
@@ -131,16 +124,19 @@ def normalize_table(df_museos,df_cines,df_bibliotecas):
     '''
     headersBiliotecas = ['cod_loc', 'idprovincia', 'iddepartamento', 'categoria', 'provincia', 'localidad', 'nombre', 'cp', 'telefono', 'mail', 'web','domicilio']
     headers = ['cod_loc', 'idprovincia', 'iddepartamento', 'categoria', 'provincia', 'localidad', 'nombre','cp', 'telefono', 'mail', 'web']
-    
-    new_df_museos = df_museos[headers]
-    new_df_cines = df_cines[headers]
-    new_df_bibliotecas = df_bibliotecas[headersBiliotecas]
+
+    try:
+        new_df_museos = df_museos[headers]
+        new_df_cines = df_cines[headers]
+        new_df_bibliotecas = df_bibliotecas[headersBiliotecas]
+    except:
+        logging.error('Error al obtener los headers de los dataframes')
+        return None
 
     #Merge the dataframes
     df_normalize = pd.concat([new_df_museos, new_df_cines, new_df_bibliotecas])
+    logging.info(' Se normalizaron los datos, primer dataframe: ' + str(len(df_normalize)))
     return changeHeader(df_normalize)
-
-table1 = normalize_table(df_museos,df_cines,df_bibliotecas) 
 
 #Creating the DataFrame 2
 def register_count_table(df_museos,df_cines,df_bibliotecas):
@@ -154,45 +150,54 @@ def register_count_table(df_museos,df_cines,df_bibliotecas):
             dataframe with the data normalized of the csv files
     '''   
     #Get the dataframe with categoria, provincia and fuente
-    new_df_bibliotecas = df_bibliotecas[['categoria', 'provincia', 'fuente']]
-    new_df_cines2 = df_cines[['categoria', 'provincia', 'fuente']]
-    new_df_museos2 = df_museos[['categoria', 'provincia', 'fuente']]
+    try:
+        new_df_bibliotecas = df_bibliotecas[['categoria', 'provincia', 'fuente']]
+        new_df_cines2 = df_cines[['categoria', 'provincia', 'fuente']]
+        new_df_museos2 = df_museos[['categoria', 'provincia', 'fuente']]
+    except:
+        logging.error('Error al obtener los headers de los dataframes')
+        return None
 
-    #Count the registers by categoria, provincia and fuente of bibliotecas
-    categoria_biblioteca = new_df_bibliotecas.groupby(['categoria']).size().reset_index(name='registros_categorias')
-    fuente_biblioteca = new_df_bibliotecas.groupby(['fuente']).size().reset_index(name='registros_fuentes')
-    provincia_categoria_biblioteca = new_df_bibliotecas.groupby(['provincia', 'categoria']).size().reset_index(name='registros_provincia_categoria')
+    try:
+        #Count the registers by categoria, provincia and fuente of bibliotecas
+        categoria_biblioteca = new_df_bibliotecas.groupby(['categoria']).size().reset_index(name='registros_categorias')
+        fuente_biblioteca = new_df_bibliotecas.groupby(['fuente']).size().reset_index(name='registros_fuentes')
+        provincia_categoria_biblioteca = new_df_bibliotecas.groupby(['provincia', 'categoria']).size().reset_index(name='registros_provincia_categoria')
 
-    #Count the registers by categoria, provincia and fuente of cines
-    categoria_cine = new_df_cines2.groupby(['categoria']).size().reset_index(name='registros_categorias')
-    fuente_cine = new_df_cines2.groupby(['fuente']).size().reset_index(name='registros_fuentes')
-    provincia_categoria_cine = new_df_cines2.groupby(['provincia', 'categoria']).size().reset_index(name='registros_provincia_categoria')
+        #Count the registers by categoria, provincia and fuente of cines
+        categoria_cine = new_df_cines2.groupby(['categoria']).size().reset_index(name='registros_categorias')
+        fuente_cine = new_df_cines2.groupby(['fuente']).size().reset_index(name='registros_fuentes')
+        provincia_categoria_cine = new_df_cines2.groupby(['provincia', 'categoria']).size().reset_index(name='registros_provincia_categoria')
 
-    #Count the registers by categoria, provincia and fuente of museos
-    categoria_museo = new_df_museos2.groupby(['categoria']).size().reset_index(name='registros_categorias')
-    fuente_museo = new_df_museos2.groupby(['fuente']).size().reset_index(name='registros_fuentes')
-    provincia_categoria_museo = new_df_museos2.groupby(['provincia', 'categoria']).size().reset_index(name='registros_provincia_categoria')
-    
-    #Merge or concat the dataframes
-    df_normalize = pd.concat([categoria_biblioteca, fuente_biblioteca, provincia_categoria_biblioteca, categoria_cine, fuente_cine, provincia_categoria_cine, categoria_museo, fuente_museo, provincia_categoria_museo])
+        #Count the registers by categoria, provincia and fuente of museos
+        categoria_museo = new_df_museos2.groupby(['categoria']).size().reset_index(name='registros_categorias')
+        fuente_museo = new_df_museos2.groupby(['fuente']).size().reset_index(name='registros_fuentes')
+        provincia_categoria_museo = new_df_museos2.groupby(['provincia', 'categoria']).size().reset_index(name='registros_provincia_categoria')
+        
+        #Merge or concat the dataframes
+        df_normalize = pd.concat([categoria_biblioteca, fuente_biblioteca, provincia_categoria_biblioteca, categoria_cine, fuente_cine, provincia_categoria_cine, categoria_museo, fuente_museo, provincia_categoria_museo])
+        logging.info(' Se normalizaron los datos, segundo dataframe: ' + str(len(df_normalize)))
+    except:
+        logging.error('Error al normalizar los datos')
+        return None
     return df_normalize
-    
-table2 = register_count_table(df_museos,df_cines,df_bibliotecas)
 
 #Creating the DataFrame 3
 def info_cine(df_cines):
-   '''
+    '''
     Create the dataframe with the data of the cines csv file
         Parameters:
             df_cines: dataframe with the data of the cines
         Returns:
             dataframe with the data normalized of the cines csv file
-   '''
-   df_cines2 = df_cines[['provincia', 'pantallas', 'butacas', 'espacio_incaa']]
-   return df_cines2
-
-table3 = info_cine()
-
+    '''
+    try:
+        df_cines2 = df_cines[['provincia', 'pantallas', 'butacas', 'espacio_incaa']]
+    except:
+        logging.error('Error al obtener los headers de los dataframes')
+        return None
+    logging.info(' Se normalizaron los datos, tercer dataframe: ' + str(len(df_cines2)))
+    return df_cines2
 
 # Creation of tables in the Database
 def upload_to_db(df, name):
@@ -205,11 +210,33 @@ def upload_to_db(df, name):
     try:
         engine = connect()
         if(engine):
+            engine.execute(f'DROP TABLE IF EXISTS {name}')
             df.to_sql(name, engine, if_exists='append', index=False)
+            logging.info("Table {} uploaded to database".format(name))
             return df
     except exc.SQLAlchemyError as e:
-        logging.error(' could not create table')
+        logging.error(' Error: {}'.format(e))
 
+#Creating the names of the csv files 
+name_museos = create_name('museos')
+name_cines = create_name('cines')
+name_bibliotecas = create_name('bibliotecas')
+
+#Download CSV files
+download_data()
+
+#Read CSV To dataframe
+df_museos = pd.read_csv(name_museos)
+df_cines = pd.read_csv(name_cines)
+df_bibliotecas = pd.read_csv(name_bibliotecas)
+
+#Process the data
+table1 = normalize_table(df_museos,df_cines,df_bibliotecas) 
+table2 = register_count_table(df_museos,df_cines,df_bibliotecas)
+table3 = info_cine(df_cines)
+
+#Upload the data to the database
 upload_to_db(table1,'table1')
 upload_to_db(table2,'table2')
 upload_to_db(table3,'table3')
+
