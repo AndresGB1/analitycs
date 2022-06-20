@@ -1,5 +1,5 @@
 # Challenge Data Analytics - Python - Alkemy
-### INSTRUCCIONES:
+### INSTRUCCIONES entorno y archivo .env:
 ### Entorno Virtual e instalación de dependencias:
 - [Link guía para instalar virtualenv windows](https://help.dreamhost.com/hc/es/articles/115000695551-Instalar-y-usar-virtualenv-con-Python-3)
 - [Link guía para instalar virtualenv linux-mac](https://rukbottoland.com/blog/tutorial-de-python-virtualenv/)
