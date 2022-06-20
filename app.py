@@ -15,10 +15,14 @@ url_cines = config('URL_CINES')
 url_bibliotecas = config('URL_BIBLIOTECAS')
 url_database = config('DATABASE_URL')
 
-#Connect to the database
 def connect():
+    '''
+    Connect to the database
+        Returns: 
+            engine or None if connection failed
+    '''
+    engine = sqlalchemy.create_engine(config('DATABASE_URL'))
     try:
-        engine = sqlalchemy.create_engine(config('DATABASE_URL'))
         engine.connect()
         logging.info(' Connected to the database')
         return engine
@@ -26,8 +30,13 @@ def connect():
         logging.error(' Error al conectar a la base de datos')
         return None
 
-#Function to create the name of the csv files with the date
 def create_name(categoria):
+    '''
+    Create the name of the csv files with the date
+        Parameters:
+            categoria: string with the name of the category
+        Returns:
+            name of the csv file'''
     name = categoria + '\\' + date.today().strftime('%Y-%m') + '\\' + categoria + '-' + date.today().strftime('%d-%m-%Y') + '.csv'
     return name
 
@@ -36,14 +45,26 @@ name_museos = create_name('museos')
 name_cines = create_name('cines')
 name_bibliotecas = create_name('bibliotecas')
 
-#Function to normalize the string headers
 def normalize_string(s):
+    '''
+    Normalize the string headers
+        Parameters:
+            s: string with the name of the header
+        Returns:
+            string with the name of the header
+    '''
+
     s = re.sub(r"([^n\u0300-\u036f]|n(?!\u0303(?![\u0300-\u036f])))[\u0300-\u036f]+", r"\1", normalize('NFD', s), 0, re.I)
     return normalize('NFC', s).lower()
 
 
 #Function to change the headers of the csv files
 def change_header_csv(name):
+    '''
+    Change the headers of the csv files
+        Parameters:
+            name: string with the name of the csv file
+    '''
     try:
         with open(name, 'r') as f:
             reader = csv.reader(f)
@@ -56,9 +77,13 @@ def change_header_csv(name):
     except:
         logging.error('Archivo no encontrado')
 
-
-#Function to get the csv files
 def get_csv(url, name):
+    '''
+    Download the csv file
+        Parameters:
+            url: string with the url of the csv file
+            name: string with the name of the csv file
+    '''
     try:
         r = requests.get(url)
         with open(name, 'wb') as f:
@@ -67,8 +92,10 @@ def get_csv(url, name):
     except:
         logging.error('Error al descargar el archivo ' + name+'\nUrl:'+url)
 
-#Downloading the csv files
 def download_data():
+    '''
+    Download the csv files
+    '''
     get_csv(url_museos, name_museos)
     get_csv(url_cines, name_cines)
     get_csv(url_bibliotecas, name_bibliotecas)
@@ -80,12 +107,28 @@ df_museos = pd.read_csv(name_museos)
 df_cines = pd.read_csv(name_cines)
 df_bibliotecas = pd.read_csv(name_bibliotecas)
 
-#Creating the DataFrame 1
 def changeHeader(df):
+    '''
+    Change the headers of the dataframe
+        Parameters:
+            df: dataframe with the data
+        Returns:
+            dataframe with the data 
+    '''
+
     df.rename({'cod_loc': 'cod_localidad', 'idprovincia': 'id_provincia', 'iddepartamento': 'id_departamento', 'cp': 'cod_postal', 'telefono': 'numero_telefono'}, axis=1, inplace=True)
     return df
 
 def normalize_table(df_museos,df_cines,df_bibliotecas):
+    '''
+    Create the dataframe with the data of the csv files
+        Parameters:
+            df_museos: dataframe with the data of the museos
+            df_cines: dataframe with the data of the cines
+            df_bibliotecas: dataframe with the data of the bibliotecas
+        Returns:
+            dataframe with the data normalized of the csv files
+    '''
     headersBiliotecas = ['cod_loc', 'idprovincia', 'iddepartamento', 'categoria', 'provincia', 'localidad', 'nombre', 'cp', 'telefono', 'mail', 'web','domicilio']
     headers = ['cod_loc', 'idprovincia', 'iddepartamento', 'categoria', 'provincia', 'localidad', 'nombre','cp', 'telefono', 'mail', 'web']
     
@@ -101,7 +144,15 @@ table1 = normalize_table(df_museos,df_cines,df_bibliotecas)
 
 #Creating the DataFrame 2
 def register_count_table(df_museos,df_cines,df_bibliotecas):
-   
+    '''
+    Create the dataframe with the data of the csv files
+        Parameters:
+            df_museos: dataframe with the data of the museos
+            df_cines: dataframe with the data of the cines
+            df_bibliotecas: dataframe with the data of the bibliotecas
+        Returns:
+            dataframe with the data normalized of the csv files
+    '''   
     #Get the dataframe with categoria, provincia and fuente
     new_df_bibliotecas = df_bibliotecas[['categoria', 'provincia', 'fuente']]
     new_df_cines2 = df_cines[['categoria', 'provincia', 'fuente']]
@@ -129,7 +180,14 @@ def register_count_table(df_museos,df_cines,df_bibliotecas):
 table2 = register_count_table(df_museos,df_cines,df_bibliotecas)
 
 #Creating the DataFrame 3
-def info_cine():
+def info_cine(df_cines):
+   '''
+    Create the dataframe with the data of the cines csv file
+        Parameters:
+            df_cines: dataframe with the data of the cines
+        Returns:
+            dataframe with the data normalized of the cines csv file
+   '''
    df_cines2 = df_cines[['provincia', 'pantallas', 'butacas', 'espacio_incaa']]
    return df_cines2
 
@@ -138,6 +196,12 @@ table3 = info_cine()
 
 # Creation of tables in the Database
 def upload_to_db(df, name):
+    '''
+    Upload the dataframe to the database
+        Parameters:
+            df: dataframe with the data
+            name: name of the table
+    '''
     try:
         engine = connect()
         if(engine):
