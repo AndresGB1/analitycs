@@ -26,7 +26,7 @@
 ### Configurar la conexión a la base de datos.
 - Base de datos alojada en la nube, (postgresql)
 
-- Archivo .env con la url de la configuración
+- Archivo "[Archivo.env](https://drive.google.com/file/d/1fPRdCx6onmjJzPXaU-jrANLVP8OQXLty/view?usp=sharing)" con la url de la configuración, IMPORTANTE descargar el archivo en la carpeta y renombrar de "Archivo.env" a ".env"
 
 - Las tablas de la BD se generan en python
 
