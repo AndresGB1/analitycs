@@ -215,7 +215,7 @@ def upload_to_db(df, name):
         if(engine):
             engine.execute(f'DROP TABLE IF EXISTS {name}')
             df.to_sql(name, engine, if_exists='append', index=False)
-            logging.info("Table {} subida a la base de datos".format(name))
+            logging.info("Tabla {} subida a la base de datos".format(name))
             return df
     except exc.SQLAlchemyError as e:
         logging.error(' Error: {}'.format(e))
