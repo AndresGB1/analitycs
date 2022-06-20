@@ -27,7 +27,7 @@ def connect():
     engine = sqlalchemy.create_engine(config('DATABASE_URL'))
     try:
         engine.connect()
-        logging.info(' Connected to the database')
+        logging.info(' Conectado a la base de datos')
         return engine
     except exc.SQLAlchemyError as e:
         logging.error(' Error al conectar a la base de datos')
@@ -215,7 +215,7 @@ def upload_to_db(df, name):
         if(engine):
             engine.execute(f'DROP TABLE IF EXISTS {name}')
             df.to_sql(name, engine, if_exists='append', index=False)
-            logging.info("Table {} uploaded to database".format(name))
+            logging.info("Table {} subida a la base de datos".format(name))
             return df
     except exc.SQLAlchemyError as e:
         logging.error(' Error: {}'.format(e))
