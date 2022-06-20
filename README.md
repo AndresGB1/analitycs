@@ -16,6 +16,7 @@
       pip install pandas 
       pip install python-decouple 
       pip install SQLAlchemy
+      pip install psycopg2-binary
       #Correr projecto
       python app.py
       
@@ -32,6 +33,7 @@
       pip install pandas 
       pip install python-decouple 
       pip install SQLAlchemy
+      pip install psycopg2-binary
       #Correr projecto
       python app.py
       
