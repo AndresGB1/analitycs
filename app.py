@@ -8,6 +8,7 @@ from unicodedata import normalize
 import sqlalchemy
 from sqlalchemy import exc
 import logging
+import os
 
 logging.basicConfig(level=logging.INFO, filename='app.log', filemode='w', 
                     format='%(asctime)s - %(levelname)s - %(message)s')
@@ -33,15 +34,24 @@ def connect():
         logging.error(' Error al conectar a la base de datos')
         return None
 
-def create_name(categoria):
+
+def create_path(categoria):
     '''
-    Create the name of the csv files with the date
+    Create the name of the csv files with the date and the folders
         Parameters:
             categoria: string with the name of the category
         Returns:
             name of the csv file'''
-    name = categoria + '\\' + date.today().strftime('%Y-%m') + '\\' + categoria + '-' + date.today().strftime('%d-%m-%Y') + '.csv'
-    return name
+    try:
+        name =  categoria + '-' + date.today().strftime('%d-%m-%Y') + '.csv'
+        path = categoria+'\\'+ date.today().strftime('%Y-%m') 
+        if not os.path.exists(path):
+            os.makedirs(path)
+        return path +'\\'+ name
+    except Exception as e:
+        logging.error('Error al crear el path')
+        return None
+    
 
 def normalize_string(s):
     '''
@@ -88,17 +98,10 @@ def get_csv(url, name):
         with open(name, 'wb') as f:
             f.write(r.content)
             logging.info(' Se descargó el archivo ' + name)
-        change_header_csv(name)
-    except:
-        logging.error('Error al descargar el archivo ' + name+'\nUrl:'+url)
-
-def download_data():
-    '''
-    Download the csv files
-    '''
-    get_csv(url_museos, name_museos)
-    get_csv(url_cines, name_cines)
-    get_csv(url_bibliotecas, name_bibliotecas)
+    except Exception as e:
+        print(e)    
+        logging.error('Error al descargar el archivo ' + name+'\nUrl:'+url)   
+    change_header_csv(name)
 
 def changeHeader(df):
     '''
@@ -136,7 +139,7 @@ def normalize_table(df_museos,df_cines,df_bibliotecas):
     #Merge the dataframes
     df_normalize = pd.concat([new_df_museos, new_df_cines, new_df_bibliotecas])
     logging.info(' Se normalizaron los datos, primer dataframe: ' + str(len(df_normalize)))
-    logging.info(' Previsualización del dataframe:\n ' + str(df_normalize))
+    logging.info(' Previsualización del dataframe:\n ' + str(change_header_csv(df_normalize)))
     return changeHeader(df_normalize)
 
 #Creating the DataFrame 2
@@ -220,13 +223,15 @@ def upload_to_db(df, name):
     except exc.SQLAlchemyError as e:
         logging.error(' Error: {}'.format(e))
 
-#Creating the names of the csv files 
-name_museos = create_name('museos')
-name_cines = create_name('cines')
-name_bibliotecas = create_name('bibliotecas')
+#Creating the path of the csv files 
+name_museos = create_path('museos')
+name_cines = create_path('cines')
+name_bibliotecas = create_path('bibliotecas')
 
 #Download CSV files
-download_data()
+get_csv(url_museos, name_museos)
+get_csv(url_cines, name_cines)
+get_csv(url_bibliotecas, name_bibliotecas)
 
 #Read CSV To dataframe
 df_museos = pd.read_csv(name_museos)
