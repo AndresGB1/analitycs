@@ -10,7 +10,7 @@ from sqlalchemy import exc
 import logging
 import os
 
-logging.basicConfig(level=logging.INFO, filename='app.log', filemode='w', 
+logging.basicConfig(level=logging.INFO, filename='app.log',encoding='UTF-8', filemode='w', 
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 #Getting the urls from the config file
@@ -44,10 +44,10 @@ def create_path(categoria):
             name of the csv file'''
     try:
         name =  categoria + '-' + date.today().strftime('%d-%m-%Y') + '.csv'
-        path = categoria+'\\'+ date.today().strftime('%Y-%m') 
+        path = categoria+'/'+ date.today().strftime('%Y-%m') 
         if not os.path.exists(path):
             os.makedirs(path)
-        return path +'\\'+ name
+        return path +'/'+ name
     except Exception as e:
         logging.error('Error al crear el path')
         return None
@@ -82,9 +82,8 @@ def change_header_csv(name):
         with open(name, 'w', newline='') as f:
             writer = csv.writer(f)
             writer.writerows(rows) 
-            logging.info(' Se cambiaron los headers del archivo ' + name)
-    except:
-        logging.error('Archivo no encontrado')
+    except Exception as e:
+        logging.error('Archivo ' + name + ' no encontrado')
 
 def get_csv(url, name):
     '''
@@ -97,13 +96,14 @@ def get_csv(url, name):
         r = requests.get(url)
         with open(name, 'wb') as f:
             f.write(r.content)
-            logging.info(' Se descargó el archivo ' + name)
+        logging.info(' Se descargó el archivo ' + name)
+        change_header_csv(name)
     except Exception as e:
         print(e)    
         logging.error('Error al descargar el archivo ' + name+'\nUrl:'+url)   
-    change_header_csv(name)
+    
 
-def changeHeader(df):
+def change_header_df(df):
     '''
     Change the headers of the dataframe
         Parameters:
@@ -111,7 +111,6 @@ def changeHeader(df):
         Returns:
             dataframe with the data 
     '''
-
     df.rename({'cod_loc': 'cod_localidad', 'idprovincia': 'id_provincia', 'iddepartamento': 'id_departamento', 'cp': 'cod_postal', 'telefono': 'numero_telefono'}, axis=1, inplace=True)
     return df
 
@@ -127,7 +126,6 @@ def normalize_table(df_museos,df_cines,df_bibliotecas):
     '''
     headersBiliotecas = ['cod_loc', 'idprovincia', 'iddepartamento', 'categoria', 'provincia', 'localidad', 'nombre', 'cp', 'telefono', 'mail', 'web','domicilio']
     headers = ['cod_loc', 'idprovincia', 'iddepartamento', 'categoria', 'provincia', 'localidad', 'nombre','cp', 'telefono', 'mail', 'web']
-
     try:
         new_df_museos = df_museos[headers]
         new_df_cines = df_cines[headers]
@@ -139,8 +137,8 @@ def normalize_table(df_museos,df_cines,df_bibliotecas):
     #Merge the dataframes
     df_normalize = pd.concat([new_df_museos, new_df_cines, new_df_bibliotecas])
     logging.info(' Se normalizaron los datos, primer dataframe: ' + str(len(df_normalize)))
-    logging.info(' Previsualización del dataframe:\n ' + str(change_header_csv(df_normalize)))
-    return changeHeader(df_normalize)
+    logging.info(' Previsualización del dataframe:\n ' + str(change_header_df(df_normalize)))
+    return change_header_df(df_normalize)
 
 #Creating the DataFrame 2
 def register_count_table(df_museos,df_cines,df_bibliotecas):
@@ -238,13 +236,13 @@ df_museos = pd.read_csv(name_museos)
 df_cines = pd.read_csv(name_cines)
 df_bibliotecas = pd.read_csv(name_bibliotecas)
 
+
 #Process the data
 table1 = normalize_table(df_museos,df_cines,df_bibliotecas) 
 table2 = register_count_table(df_museos,df_cines,df_bibliotecas)
 table3 = info_cine(df_cines)
 
 #Upload the data to the database
-upload_to_db(table1,'table1')
-upload_to_db(table2,'table2')
-upload_to_db(table3,'table3')
-
+upload_to_db(table1, 'table1')
+upload_to_db(table2, 'table2')
+upload_to_db(table3, 'table3')
