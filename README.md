@@ -1,4 +1,4 @@
-# Challenge Data Analytics - Python - Alkemy
+# Challenge Data Analytics - Python 
 ### Introducción
 - Challenge de Data Analytics con Python!
 - Base de datos alojada en la nube, (postgresql)
