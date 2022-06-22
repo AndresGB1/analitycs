@@ -25,11 +25,7 @@
       #Activar entorno
       venv\Scripts\activate
       #Instalación de dependencias
-      pip install requests
-      pip install pandas 
-      pip install python-decouple 
-      pip install SQLAlchemy
-      pip install psycopg2-binary
+      pip install -r requirements.txt
       #Correr projecto
       python app.py
 
@@ -40,11 +36,7 @@
       #Activar entorno
       source venv/bin/activate 
       #Instalación de dependencias
-      pip install requests
-      pip install pandas 
-      pip install python-decouple 
-      pip install SQLAlchemy
-      pip install psycopg2-binary
+      pip install -r requirements.txt
       #Correr projecto
       python app.py
       
