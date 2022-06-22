@@ -1,4 +1,4 @@
-# Challenge Data Analytics - Python - Alkemy
+# Challenge Data Analytics - Python 
 ### Introducción
 - Challenge de Data Analytics con Python!
 - Base de datos alojada en la nube, (postgresql)
@@ -41,4 +41,10 @@
       python app.py
       
  ### Extra
- Existe un archivo app2.ipynb en el que se podrá ver el código y las tablas generadas 
+ Existe un archivo app2.ipynb en el que se podrá ver el código y las tablas generadas, si lo desea puede abrir el archivo en github para ver las tablas generadas en su momento
+ 
+ Si desea correr el archivo Jupyter utilizando el entorno virtual generado anteriormente, ejecute en el cmd, shell terminal etc...:
+      
+      python -m ipykernel install --user --name=jupyter
+
+y proceda a cambiar el kernel utilizado a jupyter
