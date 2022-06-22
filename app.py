@@ -3,37 +3,10 @@ from datetime import date
 import pandas as pd
 import csv
 import re
-from decouple import config
 from unicodedata import normalize
-import sqlalchemy
-from sqlalchemy import exc
-import logging
+from connection.db import upload_to_db
 import os
-
-logging.basicConfig(level=logging.INFO, filename='app.log',encoding='UTF-8', filemode='w', 
-                    format='%(asctime)s - %(levelname)s - %(message)s')
-
-#Getting the urls from the config file
-url_museos = config('URL_MUSEOS')
-url_cines = config('URL_CINES')
-url_bibliotecas = config('URL_BIBLIOTECAS')
-url_database = config('DATABASE_URL')
-
-def connect():
-    '''
-    Connect to the database
-        Returns: 
-            engine or None if connection failed
-    '''
-    engine = sqlalchemy.create_engine(config('DATABASE_URL'))
-    try:
-        engine.connect()
-        logging.info(' Conectado a la base de datos')
-        return engine
-    except exc.SQLAlchemyError as e:
-        logging.error(' Error al conectar a la base de datos')
-        return None
-
+from config import URL_CINES, URL_MUSEOS, URL_BIBLIOTECAS, logging
 
 def create_path(categoria):
     '''
@@ -52,7 +25,6 @@ def create_path(categoria):
         logging.error('Error al crear el path')
         return None
     
-
 def normalize_string(s):
     '''
     Normalize the string headers
@@ -61,15 +33,9 @@ def normalize_string(s):
         Returns:
             string with the name of the header
     '''
-    try:
-        s = re.sub(r"([^n\u0300-\u036f]|n(?!\u0303(?![\u0300-\u036f])))[\u0300-\u036f]+", r"\1", normalize('NFD', s), 0, re.I)
-    except:
-        logging.error('Error al normalizar el header')
-        raise Exception('Error al normalizar el header')
+    s = re.sub(r"([^n\u0300-\u036f]|n(?!\u0303(?![\u0300-\u036f])))[\u0300-\u036f]+", r"\1", normalize('NFD', s), 0, re.I)
     return normalize('NFC', s).lower()
 
-
-#Function to change the headers of the csv files
 def change_header_csv(name):
     '''
     Change the headers of the csv files
@@ -104,7 +70,6 @@ def get_csv(url, name):
     except Exception as e:
         print(e)    
         logging.error('Error al descargar el archivo ' + name+'\nUrl:'+url)   
-    
 
 def change_header_df(df):
     '''
@@ -143,7 +108,26 @@ def normalize_table(df_museos,df_cines,df_bibliotecas):
     logging.info(' Previsualización del dataframe:\n ' + str(change_header_df(df_normalize)))
     return change_header_df(df_normalize)
 
-#Creating the DataFrame 2
+def arr_provincia_categoria(df):
+    '''
+    Create the array with the provincia and the categoria
+        Parameters:
+            df: dataframe with the data
+        Returns:
+            array with the provincia and the categoria
+    '''
+    try:
+        new_df = []
+        for x in range(len(df.index.values)):
+            new_df.append(df.index.values[x][0]+'_'+df.index.values[x][1])
+        return new_df
+    except:
+        logging.error('Error al crear el array')
+        return None
+
+def concat_df_2(df,tipo_registro,valor_registro,numero_registros):
+    return pd.concat([df, pd.DataFrame({'tipo_registro':tipo_registro, 'valor_registro': valor_registro, 'numero_registros': numero_registros})], ignore_index=True )   
+
 def register_count_table(df_museos,df_cines,df_bibliotecas):
     '''
     Create the dataframe with the data of the csv files
@@ -154,7 +138,6 @@ def register_count_table(df_museos,df_cines,df_bibliotecas):
         Returns:
             dataframe with the data normalized of the csv files
     '''   
-    #Get the dataframe with categoria, provincia and fuente
     try:
         new_df_bibliotecas = df_bibliotecas[['categoria', 'provincia', 'fuente']]
         new_df_cines2 = df_cines[['categoria', 'provincia', 'fuente']]
@@ -164,31 +147,45 @@ def register_count_table(df_museos,df_cines,df_bibliotecas):
         return None
 
     try:
-        #Count the registers by categoria, provincia and fuente of bibliotecas
-        categoria_biblioteca = new_df_bibliotecas.groupby(['categoria']).size().reset_index(name='registros_categorias')
-        fuente_biblioteca = new_df_bibliotecas.groupby(['fuente']).size().reset_index(name='registros_fuentes')
-        provincia_categoria_biblioteca = new_df_bibliotecas.groupby(['provincia', 'categoria']).size().reset_index(name='registros_provincia_categoria')
+        header = ['tipo_registro','valor_registro','numero_registros']
+        df = pd.DataFrame(columns=header)
 
+        #Count the registers by categoria, provincia and fuente of bibliotecas
+        categoria_biblioteca = new_df_bibliotecas.groupby(['categoria']).size()
+        fuente_biblioteca = new_df_bibliotecas.groupby(['fuente']).size()
+        provincia_categoria_biblioteca = new_df_bibliotecas.groupby(['provincia', 'categoria']).size()
+        v_provincia_categoria_biblioteca = arr_provincia_categoria(provincia_categoria_biblioteca)
+        
         #Count the registers by categoria, provincia and fuente of cines
-        categoria_cine = new_df_cines2.groupby(['categoria']).size().reset_index(name='registros_categorias')
-        fuente_cine = new_df_cines2.groupby(['fuente']).size().reset_index(name='registros_fuentes')
-        provincia_categoria_cine = new_df_cines2.groupby(['provincia', 'categoria']).size().reset_index(name='registros_provincia_categoria')
+        categoria_cine = new_df_cines2.groupby(['categoria']).size()
+        fuente_cine = new_df_cines2.groupby(['fuente']).size()
+        provincia_categoria_cine = new_df_cines2.groupby(['provincia', 'categoria']).size()
+        v_provincia_categoria_cine = arr_provincia_categoria(provincia_categoria_cine)
 
         #Count the registers by categoria, provincia and fuente of museos
-        categoria_museo = new_df_museos2.groupby(['categoria']).size().reset_index(name='registros_categorias')
-        fuente_museo = new_df_museos2.groupby(['fuente']).size().reset_index(name='registros_fuentes')
-        provincia_categoria_museo = new_df_museos2.groupby(['provincia', 'categoria']).size().reset_index(name='registros_provincia_categoria')
+        categoria_museo = new_df_museos2.groupby(['categoria']).size()
+        fuente_museo = new_df_museos2.groupby(['fuente']).size()
+        provincia_categoria_museo = new_df_museos2.groupby(['provincia', 'categoria']).size()
+        v_provincia_categoria_museo = arr_provincia_categoria(provincia_categoria_museo)
         
         #Merge or concat the dataframes
-        df_normalize = pd.concat([categoria_biblioteca, fuente_biblioteca, provincia_categoria_biblioteca, categoria_cine, fuente_cine, provincia_categoria_cine, categoria_museo, fuente_museo, provincia_categoria_museo])
-        logging.info(' Se normalizaron los datos, segundo dataframe: ' + str(len(df_normalize)))
+        df = concat_df_2(df,'categoria',categoria_biblioteca.index.values,categoria_biblioteca.values)
+        df = concat_df_2(df,'fuente',fuente_biblioteca.index.values,fuente_biblioteca.values)
+        df = concat_df_2(df,'provincia_categoria',v_provincia_categoria_biblioteca,provincia_categoria_biblioteca.values)
+        df = concat_df_2(df,'categoria',categoria_cine.index.values,categoria_cine.values)
+        df = concat_df_2(df,'fuente',fuente_cine.index.values,fuente_cine.values)
+        df = concat_df_2(df,'provincia_categoria',v_provincia_categoria_cine,provincia_categoria_cine.values)
+        df = concat_df_2(df,'categoria',categoria_museo.index.values,categoria_museo.values)
+        df = concat_df_2(df,'fuente',fuente_museo.index.values,fuente_museo.values)        
+        df = concat_df_2(df,'provincia_categoria',v_provincia_categoria_museo,provincia_categoria_museo.values)
+
+        logging.info(' Se normalizaron los datos, segundo dataframe: ' + str(len(df)))
+        logging.info(' Previsualización del dataframe:\n ' + str(df))
     except:
         logging.error('Error al normalizar los datos')
         return None
-    logging.info(' Previsualización del dataframe:\n ' + str(df_normalize))
-    return df_normalize
+    return df
 
-#Creating the DataFrame 3
 def info_cine(df_cines):
     '''
     Create the dataframe with the data of the cines csv file
@@ -206,39 +203,20 @@ def info_cine(df_cines):
     logging.info(' Previsualización del dataframe:\n ' + str(df_cines2))
     return df_cines2
 
-# Creation of tables in the Database
-def upload_to_db(df, name):
-    '''
-    Upload the dataframe to the database
-        Parameters:
-            df: dataframe with the data
-            name: name of the table
-    '''
-    try:
-        engine = connect()
-        if(engine):
-            engine.execute(f'DROP TABLE IF EXISTS {name}')
-            df.to_sql(name, engine, if_exists='append', index=False)
-            logging.info("Tabla {} subida a la base de datos".format(name))
-            return df
-    except exc.SQLAlchemyError as e:
-        logging.error(' Error: {}'.format(e))
-
 #Creating the path of the csv files 
 name_museos = create_path('museos')
 name_cines = create_path('cines')
 name_bibliotecas = create_path('bibliotecas')
 
 #Download CSV files
-get_csv(url_museos, name_museos)
-get_csv(url_cines, name_cines)
-get_csv(url_bibliotecas, name_bibliotecas)
+get_csv(URL_MUSEOS, name_museos)
+get_csv(URL_CINES, name_cines)
+get_csv(URL_BIBLIOTECAS, name_bibliotecas)
 
 #Read CSV To dataframe
 df_museos = pd.read_csv(name_museos)
 df_cines = pd.read_csv(name_cines)
 df_bibliotecas = pd.read_csv(name_bibliotecas)
-
 
 #Process the data
 table1 = normalize_table(df_museos,df_cines,df_bibliotecas) 
