@@ -11,7 +11,24 @@
 - [Link guía para instalar virtualenv windows](https://sectorgeek.com/instalar-python-pip-y-virtualenv-en-windows-10/)
 - [Link guía para instalar virtualenv linux-mac](https://rukbottoland.com/blog/tutorial-de-python-virtualenv/)
 
--> Ingresar a la carpeta donde se encuentra el archivo app.py
+-> Ingresar a la carpeta donde se encuentra el archivo app.py y abrir en el cmd, shell terminal etc... (copy paste)
+
+- Windows:
+
+
+      #Generar entorno virtual   
+      python3 -m virtualenv venv
+      #Activar entorno
+      venv\Scripts\activate
+      #Instalación de dependencias
+      pip install requests
+      pip install pandas 
+      pip install python-decouple 
+      pip install SQLAlchemy
+      pip install psycopg2-binary
+      #Correr projecto
+      python app.py
+
 - Linux: 
       
       #Generar entorno virtual     
@@ -28,19 +45,4 @@
       python app.py
       
       
-- Windows:
-
-
-      #Generar entorno virtual   
-      python3 -m virtualenv venv
-      #Activar entorno
-      venv\Scripts\activate
-      #Instalación de dependencias
-      pip install requests
-      pip install pandas 
-      pip install python-decouple 
-      pip install SQLAlchemy
-      pip install psycopg2-binary
-      #Correr projecto
-      python app.py
 
