@@ -1,7 +1,7 @@
 import sqlalchemy
 from sqlalchemy import exc
 from config import URL_DATABASE, logging
-
+from datetime import date
 def connect():
     '''
     Connect to the database
@@ -28,6 +28,7 @@ def upload_to_db(df, name):
         engine = connect()
         if(engine):
             engine.execute(f'DROP TABLE IF EXISTS {name}')
+            df['fecha_carga'] = date.today()
             df.to_sql(name, engine, if_exists='append', index=False)
             logging.info("Tabla {} subida a la base de datos".format(name))
             return df
