@@ -61,8 +61,11 @@ def normalize_string(s):
         Returns:
             string with the name of the header
     '''
-
-    s = re.sub(r"([^n\u0300-\u036f]|n(?!\u0303(?![\u0300-\u036f])))[\u0300-\u036f]+", r"\1", normalize('NFD', s), 0, re.I)
+    try:
+        s = re.sub(r"([^n\u0300-\u036f]|n(?!\u0303(?![\u0300-\u036f])))[\u0300-\u036f]+", r"\1", normalize('NFD', s), 0, re.I)
+    except:
+        logging.error('Error al normalizar el header')
+        raise Exception('Error al normalizar el header')
     return normalize('NFC', s).lower()
 
 
@@ -74,12 +77,12 @@ def change_header_csv(name):
             name: string with the name of the csv file
     '''
     try:
-        with open(name, 'r') as f:
+        with open(name, 'r', encoding='utf-8') as f:
             reader = csv.reader(f)
             header = next(reader)  
             header = list(map(normalize_string, header))
             rows = [header] + list(reader)  
-        with open(name, 'w', newline='') as f:
+        with open(name, 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerows(rows) 
     except Exception as e:
