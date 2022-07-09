@@ -26,7 +26,7 @@
       venv\Scripts\activate
       #Instalación de dependencias
       pip install -r requirements.txt
-      #Correr projecto
+      #Correr proyecto
       python app.py
 
 - Linux: 
@@ -37,7 +37,7 @@
       source venv/bin/activate 
       #Instalación de dependencias
       pip install -r requirements.txt
-      #Correr projecto
+      #Correr proyecto
       python app.py
       
  ### Extra
